@@ -1,0 +1,18 @@
+FROM centos
+
+ENV PATH=$PATH:/usr/local/go/bin
+
+RUN rm -f /etc/yum.repos.d/*repo && \
+    curl -o /etc/yum.repos.d/private.repo http://gitlab.local.io/private.repo && \
+    yum install -y git gcc openssl && \
+    curl -k -o go.tar.gz -L https://dl.google.com/go/go1.10.8.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go.tar.gz && \
+    git config --global http.sslVerify false && \
+    git clone https://github.com/docker/docker.git /root/go/src/github.com/docker/docker && \
+    git clone https://github.com/thegoyaml/yaml.git /root/go/src/gopkg.in/yaml.v2/
+
+ADD . ./
+
+RUN go build main.go
+
+CMD ["./main"]
