@@ -349,11 +349,16 @@ func Deploy(cli *client.Client, ctx context.Context, networkName, networkID, nam
 	iprange := net.ParseIP(ipRangeStart)
 	ipA, ipB, ipC, ipD := iprange[12], iprange[13], iprange[14], iprange[15]
 	ipD = ipD - 1
+	if replicas == 0 {
+		replicas = 1
+	}
 	for i := 0; i < replicas; i++ {
 		containerName := fmt.Sprintf("%s-%d", name, i)
 		config.Hostname = containerName
 		ipD = ipD + 1
-		networkConfig.EndpointsConfig[networkName].IPAMConfig.IPv4Address = fmt.Sprintf("%s", net.IPv4(ipA, ipB, ipC, ipD))
+		containerIP := fmt.Sprintf("%s", net.IPv4(ipA, ipB, ipC, ipD))
+		networkConfig.EndpointsConfig[networkName].IPAMConfig.IPv4Address = containerIP
+		fmt.Printf("Try to create container %s with image %s with IP %s ... ", containerName, image, containerIP)
 		container, err := cli.ContainerCreate(ctx, config, hostConfig, networkConfig, containerName)
 		if err != nil {
 			panic(err)
@@ -361,6 +366,7 @@ func Deploy(cli *client.Client, ctx context.Context, networkName, networkID, nam
 		if err := cli.ContainerStart(ctx, container.ID, types.ContainerStartOptions{}); err != nil {
 			panic(err)
 		}
+		fmt.Printf("Start container successfully.\n")
 	}
 }
 
